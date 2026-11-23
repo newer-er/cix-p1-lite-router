@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>AnyInt Lite Router · 此芯 P1 实机演示</title>
+    <link rel="icon" type="image/png" href="/anyint-mark.png">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+    <script src="/hero.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <div class="brand" lang="en">
+          <img class="brand-mark" src="/anyint-mark.png" alt="" width="192" height="200">
+          <span class="brand-name">AnyInt</span>
+          <span class="brand-product">Lite Router</span>
+        </div>
+        <div class="topbar-actions">
+          <a class="topbar-link" href="#demo">实机演示</a>
+          <div id="board-status" class="board-status" data-state="checking" role="status">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="board-name">此芯 P1</span>
+            <span id="board-state" class="board-state">连接中</span>
+          </div>
+          <label class="classifier-picker">
+            <span class="classifier-picker-label">板端模型</span>
+            <select id="classifier-model" aria-label="板端分类模型" disabled>
+              <option value="m47b">0.8B</option>
+              <optgroup id="pending-classifiers" label="待接入">
+                <option value="intent06b" disabled>0.6B</option>
+              </optgroup>
+            </select>
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-content">
+          <h1 id="hero-title" class="hero-title" lang="en">Lite <em>Router</em></h1>
+          <p class="hero-lead">板端判断，云端作答。</p>
+          <div class="hero-actions">
+            <a class="hero-action hero-action-primary" href="#demo">开始演示</a>
+            <a class="hero-action hero-action-secondary" href="#demo" data-hero-example="debugging">载入脚本示例</a>
+          </div>
+        </div>
+        <canvas id="hero-wave" class="hero-wave" aria-hidden="true"></canvas>
+      </section>
+
+      <section id="demo" class="shell demo" aria-labelledby="demo-title" tabindex="-1">
+        <div class="intro">
+          <h2 id="demo-title">智能路由<span>分发</span></h2>
+          <p id="live-intro">此芯 P1 使用 <strong id="current-classifier">M47b 0.8B</strong> 分类，自动选择云端模型。</p>
+          <p id="replay-intro" hidden>离线回放两条公开示例。可切换模型档位，查看分类信号和路由结果。</p>
+        </div>
+
+        <div class="console">
+          <aside class="scenario-panel" aria-labelledby="scenario-title">
+            <h3 id="scenario-title">演示场景</h3>
+            <div class="examples" role="group" aria-label="载入示例请求">
+              <button type="button" class="example-button" data-example="inspection" aria-pressed="false">
+                <span class="example-mark checklist" aria-hidden="true"></span>
+                <span class="example-title">巡检交接</span>
+                <span class="example-note">整理设备巡检待办</span>
+              </button>
+              <button type="button" class="example-button" data-example="debugging" aria-pressed="false">
+                <span class="example-mark brackets" aria-hidden="true"></span>
+                <span class="example-title">脚本修复</span>
+                <span class="example-note">排查采样脚本异常</span>
+              </button>
+            </div>
+            <details id="route-comparison" class="route-comparison" hidden>
+              <summary>对比最近两次</summary>
+              <ul id="comparison-list" class="comparison-list"></ul>
+            </details>
+          </aside>
+
+          <section class="trace-panel" aria-labelledby="trace-title">
+            <div class="panel-heading">
+              <h3 id="trace-title">路由轨迹</h3>
+              <span id="request-state" class="request-state" role="status" hidden></span>
+            </div>
+
+            <ol class="trace-steps" aria-label="智能路由流程">
+              <li id="request-step" class="trace-step" data-state="idle">
+                <div class="step-heading">
+                  <h4 id="request-title">请求</h4>
+                  <code class="mode-tag" title="自动选择模型">auto</code>
+                </div>
+                <div class="step-body">
+                  <form id="request-form">
+                    <textarea id="prompt" name="prompt" aria-labelledby="request-title" rows="3"
+                      maxlength="12000" placeholder="输入请求，或载入左侧示例" required></textarea>
+                    <div class="request-actions">
+                      <ul id="features" class="feature-tags" aria-label="请求特征" hidden></ul>
+                      <button id="send" class="send-button" type="submit" title="Ctrl 或 ⌘ + Enter">发送</button>
+                    </div>
+                  </form>
+                </div>
+              </li>
+
+              <li id="signals-step" class="trace-step" data-state="idle">
+                <div class="step-heading">
+                  <h4>识别信号</h4>
+                  <span id="signal-time" class="step-meta" hidden></span>
+                </div>
+                <div class="step-body">
+                  <p id="signal-empty" class="placeholder">等待板端分类</p>
+                  <div id="signals" class="signals" aria-label="分类信号" hidden></div>
+                  <div id="signal-detail" class="signal-detail" hidden>
+                    <p id="signal-note" class="signal-note"></p>
+                    <ul id="probabilities" class="probabilities"></ul>
+                  </div>
+                </div>
+              </li>
+
+              <li id="decision-step" class="trace-step" data-state="idle">
+                <div class="step-heading"><h4>路由判定</h4></div>
+                <div class="step-body">
+                  <ul id="lanes" class="lanes" aria-label="任务类型"></ul>
+                  <div id="task" class="decision-value" hidden></div>
+                  <p id="policy" class="step-note" hidden></p>
+                </div>
+              </li>
+
+              <li id="worker-step" class="trace-step" data-state="idle">
+                <div class="step-heading">
+                  <h4>云端模型调用</h4>
+                  <span id="call-count" class="step-meta" hidden></span>
+                </div>
+                <div class="step-body">
+                  <div id="worker" class="worker placeholder">等待选模</div>
+                  <ul id="worker-calls" class="worker-calls" aria-label="实际调用记录" hidden></ul>
+                </div>
+              </li>
+            </ol>
+
+            <details id="route-details" class="route-details" hidden>
+              <summary>路由详情</summary>
+              <dl id="details-list"></dl>
+            </details>
+          </section>
+
+          <section id="response-panel" class="response-panel" aria-labelledby="answer-title" data-state="idle">
+            <div class="panel-heading">
+              <h3 id="answer-title">云端回答</h3>
+              <span id="response-time" class="step-meta" hidden></span>
+            </div>
+            <div id="answer" class="answer" role="region" aria-labelledby="answer-title" aria-live="polite" tabindex="0">
+              <p class="answer-placeholder">等待回答</p>
+            </div>
+            <p id="response-usage" class="response-usage" hidden></p>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
